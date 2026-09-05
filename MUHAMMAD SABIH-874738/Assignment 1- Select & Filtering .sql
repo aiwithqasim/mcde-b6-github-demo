@@ -20,7 +20,7 @@ WHERE YEAR(order_date)= 2017;
 --Task 5:  List products whose name contains the word 'Trek'.
 --Hint: Use the LIKE operator with wildcards.
 SELECT * FROM production.products
-WHERE product_name LIKE 'Trek%';
+WHERE product_name LIKE '%Trek%';
 
 --Task 6:  Find all products priced between 500 and 1500.
 --Hint: Use the BETWEEN operator.
