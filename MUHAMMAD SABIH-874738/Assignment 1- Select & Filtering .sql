@@ -3,7 +3,6 @@
 --Task 1:  List all products with their name, model year, and list price.
 SELECT product_name,model_year,list_price 
 FROM production.products;
-select * from production.products;
 
 --Task 2:  Find all products whose list price is greater than 1000. Show product name and price.
 SELECT product_name,list_price 
