@@ -3,7 +3,6 @@
 --Task 1:  List all products with their name, model year, and list price.
 SELECT product_name,model_year,list_price 
 FROM production.products;
-select * from production.products;
 
 --Task 2:  Find all products whose list price is greater than 1000. Show product name and price.
 SELECT product_name,list_price 
@@ -21,7 +20,7 @@ WHERE YEAR(order_date)= 2017;
 --Task 5:  List products whose name contains the word 'Trek'.
 --Hint: Use the LIKE operator with wildcards.
 SELECT * FROM production.products
-WHERE product_name LIKE 'Trek%';
+WHERE product_name LIKE '%Trek%';
 
 --Task 6:  Find all products priced between 500 and 1500.
 --Hint: Use the BETWEEN operator.
