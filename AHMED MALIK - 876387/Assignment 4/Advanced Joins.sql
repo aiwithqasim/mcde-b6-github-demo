@@ -137,6 +137,46 @@ WHERE oi.order_id IS NULL;
 ----------------------------------------------------
 
 
--- Task 59 is completed!! --
+-- Task 59 is Completed!! --
 
+SELECT
+    c.category_id,
+    c.category_name
+FROM production.categories AS c
+LEFT JOIN (
+    SELECT DISTINCT category_id
+    FROM production.products
+    WHERE list_price > 2000
+) AS expensive
+    ON c.category_id = expensive.category_id
+WHERE expensive.category_id IS NULL;
+
+----------------------------------------------------
+
+-- Task 60 is Completed!! --
+
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name
+FROM sales.customers AS c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales.orders AS o
+    WHERE o.customer_id = c.customer_id
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM sales.orders AS o
+    JOIN sales.order_items AS oi
+        ON o.order_id = oi.order_id
+    JOIN production.products AS p
+        ON oi.product_id = p.product_id
+    JOIN production.brands AS b
+        ON p.brand_id = b.brand_id
+    WHERE o.customer_id = c.customer_id
+      AND b.brand_name = 'Trek'
+);
+
+---x-------x-------------x-----------x------------x---------
 
