@@ -1,0 +1,58 @@
+SELECT * FROM
+production.products
+
+SELECT * FROM
+sales.customers
+
+                       -- ======== SECTION # 01 ========
+
+-- Task 1:  List all products with their name, model year, and list price.
+
+SELECT product_name,
+model_year,
+list_price From
+production.products;
+
+-- Task 2:  Find all products whose list price is greater than 1000. Show product name and price.
+
+SELECT product_name,
+list_price
+FROM production.products
+WHERE list_price > 1000;
+
+-- Task 3:  List all customers from the state of New York (NY).
+
+SELECT * FROM
+sales.customers as sc
+WHERE sc.state LIKE 'NY';
+
+-- Task 4:  Find all orders placed in the year 2017
+
+SELECT *
+FROM sales.orders
+WHERE order_date >= '2017-01-01'
+  AND order_date < '2018-01-01'; 
+
+  -- Task 5:  List products whose name contains the word 'Trek'.
+
+  SELECT * FROM
+  production.products
+  WHERE product_name LIKE 'Trek%';
+
+  -- Task 6:  Find all products priced between 500 and 1500.
+
+  SELECT * FROM 
+  production.products
+  WHERE list_price between '500' AND '1500';
+
+  -- Task 7:  List all distinct cities where customers are located.
+
+  SELECT 
+  DISTINCT customers.city 
+  FROM sales.customers
+
+  -- Task 8:  Find all orders that have NOT been shipped yet.
+
+  SELECT * FROM 
+  sales.orders
+  WHERE shipped_date IS NULL
