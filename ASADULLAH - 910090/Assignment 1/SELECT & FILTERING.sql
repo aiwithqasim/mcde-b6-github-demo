@@ -1,0 +1,46 @@
+--              Section 1 — Basic SELECT & Filtering
+-- Task 1: List all products with their name, model year, and list price.
+SELECT product_name,
+       model_year,
+       list_price
+FROM   production.products;
+
+-- Task 2:  Find all products whose list price is greater than 1000. Show product name and price.
+SELECT list_price
+FROM   production.products
+WHERE  list_price > 1000;
+
+-- Task 3:  List all customers from the state of New York (NY).
+SELECT state
+FROM   sales.customers
+WHERE  state = 'NY';
+
+-- Task 4:  Find all orders placed in the year 2017.
+SELECT order_id,
+       order_date
+FROM   sales.orders
+WHERE  YEAR(order_date) = 2017;
+
+-- Task 5:  List products whose name contains the word 'Trek'.
+SELECT product_name
+FROM   production.products
+WHERE  product_name LIKE '%trek%';
+
+-- Task 6:  Find all products priced between 500 and 1500.
+SELECT   product_name,
+         list_price
+FROM     production.products
+WHERE    list_price BETWEEN 500 AND 1500
+ORDER BY list_price ASC;
+
+-- Task 7:  Find all products priced between 500 and 1500.
+SELECT DISTINCT city
+FROM   sales.customers;
+
+-- Task 8:  Find all orders that have NOT been shipped yet.
+SELECT   order_date,
+         order_id,
+         shipped_date
+FROM     sales.orders
+WHERE    shipped_date IS NULL
+ORDER BY order_date ASC;
