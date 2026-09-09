@@ -1,0 +1,117 @@
+SELECT 
+    s.first_name + ' ' + s.last_name AS staff_name,
+    m.first_name + ' ' + m.last_name AS manager_name
+FROM sales.staffs s
+LEFT JOIN sales.staffs m
+    ON s.manager_id = m.staff_id;
+
+SELECT 
+    p1.product_name AS product_1,
+    p2.product_name AS product_2,
+    b.brand_name
+FROM production.products p1
+JOIN production.products p2
+    ON p1.brand_id = p2.brand_id
+    AND p1.list_price = p2.list_price
+    AND p1.product_id < p2.product_id
+JOIN production.brands b
+    ON p1.brand_id = b.brand_id;
+
+
+    SELECT 
+    b.brand_name,
+    c.category_name
+FROM production.brands b
+CROSS JOIN production.categories c;
+
+SELECT 
+    bc.brand_name,
+    bc.category_name
+FROM
+(
+    SELECT 
+        b.brand_id,
+        b.brand_name,
+        c.category_id,
+        c.category_name
+    FROM production.brands b
+    CROSS JOIN production.categories c
+) bc
+LEFT JOIN production.products p
+    ON p.brand_id = bc.brand_id
+    AND p.category_id = bc.category_id
+WHERE p.product_id IS NULL;
+
+SELECT 
+    b.brand_name,
+    p.product_name
+FROM production.products p
+RIGHT JOIN production.brands b
+    ON p.brand_id = b.brand_id;
+
+SELECT 
+    s.store_name,
+    o.order_id,
+    o.order_date,
+    o.order_status
+FROM sales.orders o
+RIGHT JOIN sales.stores s
+    ON o.store_id = s.store_id;
+
+    SELECT 
+    c.customer_id,
+    c.first_name,
+    c.last_name
+FROM sales.customers c
+LEFT JOIN sales.orders o
+    ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL;
+
+SELECT 
+    p.product_id,
+    p.product_name
+FROM production.products p
+LEFT JOIN production.stocks s
+    ON p.product_id = s.product_id
+WHERE s.store_id IS NULL;
+
+SELECT 
+    p.product_id,
+    p.product_name
+FROM production.products p
+LEFT JOIN sales.order_items oi
+    ON p.product_id = oi.product_id
+WHERE oi.order_id IS NULL;
+
+
+SELECT 
+    c.category_id,
+    c.category_name
+FROM production.categories c
+LEFT JOIN
+(
+    SELECT DISTINCT category_id
+    FROM production.products
+    WHERE list_price > 2000
+) p
+    ON c.category_id = p.category_id
+WHERE p.category_id IS NULL;
+
+SELECT DISTINCT
+    c.customer_id,
+    c.first_name,
+    c.last_name
+FROM sales.customers c
+JOIN sales.orders o
+    ON c.customer_id = o.customer_id
+LEFT JOIN sales.order_items oi
+    ON o.order_id = oi.order_id
+LEFT JOIN production.products p
+    ON oi.product_id = p.product_id
+    AND p.brand_id = (
+        SELECT brand_id
+        FROM production.brands
+        WHERE brand_name = 'Trek'
+    )
+WHERE p.product_id IS NULL;
+
