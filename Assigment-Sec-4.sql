@@ -1,7 +1,7 @@
 use bikestores;
 -- Assignment 4 - Advance Joins 
 
---self join
+--self joins
 
 --task 41 
 
