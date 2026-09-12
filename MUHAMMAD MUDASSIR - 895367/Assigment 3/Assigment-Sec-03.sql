@@ -2,7 +2,7 @@ use bikestores ;
 
 --section 3
 
---task 12
+--task 12--
 SELECT
     p.product_name,
     b.brand_name,
