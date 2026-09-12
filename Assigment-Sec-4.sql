@@ -1,5 +1,5 @@
 use bikestores;
--- Assignment 4 - Advance Joins 
+-- Assignment 4 - Advance Join
 
 --self joins
 
