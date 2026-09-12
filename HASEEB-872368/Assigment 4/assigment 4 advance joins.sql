@@ -22,6 +22,7 @@ JOIN production.products AS p2
 JOIN production.brands AS b
     ON p1.brand_id = b.brand_id;
 
+
 ---Cross Join--
 
 --Task 45:Generate a list of every possible combination of brand and category. Show brandname and category name.
