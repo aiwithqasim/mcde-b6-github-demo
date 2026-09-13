@@ -7,7 +7,7 @@ FROM
 LEFT JOIN 
     sales.staffs m ON e.manager_id = m.staff_id;
 
-    --task42
+    --   task42
     SELECT 
     p1.product_name AS product_1,
     p2.product_name AS product_2,
