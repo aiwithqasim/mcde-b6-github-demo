@@ -1,57 +1,32 @@
--- Assignment: Joins2
--- Student: Talha
--- Saylani ID: [CDE-884628]
+-- ============================================================
+-- Section 2 - Sorting & Top-N
+-- Student: Muhammad Talha
+-- Saylani ID: CDE-884628
+-- ============================================================
 
--------------------------------------------------
--- TASK 1: Show product name, model year, and price
--------------------------------------------------
-SELECT product_name, model_year, list_price
-FROM production.products;
-
--------------------------------------------------
--- TASK 2: Show products with price greater than 1000
--------------------------------------------------
-SELECT product_name, list_price
+-- Task 9: List the top 10 most expensive products.
+SELECT TOP 10
+    product_name,
+    list_price
 FROM production.products
-WHERE list_price > 1000;
+ORDER BY list_price DESC;
 
--------------------------------------------------
--- TASK 3: Show customers from New York (NY)
--------------------------------------------------
-SELECT * 
+-- Task 10: List all customers sorted by last name, then first name.
+SELECT
+    customer_id,
+    first_name,
+    last_name,
+    email,
+    city,
+    state
 FROM sales.customers
-WHERE state = 'NY';
+ORDER BY last_name ASC, first_name ASC;
 
--------------------------------------------------
--- TASK 4: Show orders placed in year 2017
--------------------------------------------------
-SELECT *
-FROM sales.orders
-WHERE YEAR(order_date) = 2017;
-
--------------------------------------------------
--- TASK 5: Show products containing 'Trek' in name
--------------------------------------------------
-SELECT *
+-- Task 11: Find the 5 cheapest products produced in model year 2018.
+SELECT TOP 5
+    product_name,
+    model_year,
+    list_price
 FROM production.products
-WHERE product_name LIKE '%Trek%';
-
--------------------------------------------------
--- TASK 6: Show products with price between 500 and 1500
--------------------------------------------------
-SELECT *
-FROM production.products
-WHERE list_price BETWEEN 500 AND 1500;
-
--------------------------------------------------
--- TASK 7: Show distinct cities of customers
--------------------------------------------------
-SELECT DISTINCT city
-FROM sales.customers;
-
--------------------------------------------------
--- TASK 8: Show orders not yet shipped
--------------------------------------------------
-SELECT *
-FROM sales.orders
-WHERE shipped_date IS NULL;
+WHERE model_year = 2018
+ORDER BY list_price ASC;
