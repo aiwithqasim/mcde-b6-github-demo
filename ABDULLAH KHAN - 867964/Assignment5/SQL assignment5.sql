@@ -86,6 +86,14 @@ CROSS APPLY (
 --you choose ANY over IN, and when would you choose ALL? What business question naturally maps to ALL that
 --cannot be expressed cleanly with IN?
 
+/*= ANY (subquery) is functionally equivalent to IN (subquery) because both check whether a value matches at least one value returned 
+by the subquery. 
+In practice, IN is generally clearer when checking membership in a set, 
+while ANY is useful when making comparisons 
+such as > ANY or < ANY. 
+ALL is used when a comparison must be true for every value returned by the subquery. A natural business question 
+for ALL would be: "Which products have a price higher than every product in a particular category?" This cannot be expressed cleanly
+with IN because IN checks equality/membership, whereas ALL allows us to express a universal comparison against an entire set of values*/
 
 --5.7 END
 
