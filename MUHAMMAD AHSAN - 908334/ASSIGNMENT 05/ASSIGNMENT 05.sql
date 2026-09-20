@@ -23,7 +23,7 @@ WHERE customer_id IN (
 
 
 -- 5.3
--- NOT IN NULL trap ko avoid karne ke liye NOT EXISTS use kareinn
+-- NOT IN NULL trap ko avoid karne ke liye NOT EXISTS use karein
 SELECT c.customer_id
 FROM sales.customers AS c
 WHERE NOT EXISTS (
