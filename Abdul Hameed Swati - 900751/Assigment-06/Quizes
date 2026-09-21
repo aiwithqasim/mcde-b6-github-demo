@@ -1,0 +1,152 @@
+--=============== Q NO 1 =================================
+SELECT 
+    o.order_id,
+    c.first_name + ' ' + c.last_name AS customer_Full_name,
+    st.store_name,
+    sf.first_name + ' ' + sf.last_name AS staff_name
+FROM sales.orders o
+JOIN sales.customers c ON o.customer_id = c.customer_id
+JOIN sales.stores st ON o.store_id = st.store_id
+JOIN sales.staffs sf ON o.staff_id = sf.staff_id
+
+
+--=============== Q NO 2 =================================
+SELECT 
+    p.product_id,
+    p.product_name,
+    b.brand_name,
+    c.category_name
+FROM production.products p
+LEFT JOIN production.brands b ON p.brand_id = b.brand_id
+LEFT JOIN production.categories c ON p.category_id = c.category_id;
+
+--=============== Q NO 3 =================================
+SELECT 
+    c.first_name + ' ' + c.last_name AS customer_name,
+    c.city,
+    c.email
+FROM sales.customers c
+LEFT JOIN sales.orders o ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL;
+
+--=============== Q NO 4 =================================
+SELECT 
+    st.store_name,
+    SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS total_revenue
+FROM sales.stores st
+JOIN sales.orders o ON st.store_id = o.store_id
+JOIN sales.order_items oi ON o.order_id = oi.order_id
+GROUP BY st.store_name
+ORDER BY total_revenue DESC;
+
+--=============== Q NO 5 =================================
+SELECT 
+    b.brand_name,
+    COUNT(p.product_id) AS product_count,
+    AVG(p.list_price) AS avg_price,
+    MAX(p.list_price) AS max_price
+FROM production.brands b
+JOIN production.products p ON b.brand_id = p.brand_id
+GROUP BY b.brand_name
+HAVING COUNT(p.product_id) > 5;
+--=============== Q NO 6 =================================
+SELECT 
+    MONTH(o.order_date) AS order_month,
+    COUNT(DISTINCT o.order_id) AS total_orders,
+    SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS total_revenue
+FROM sales.orders o
+JOIN sales.order_items oi ON o.order_id = oi.order_id
+WHERE YEAR(o.order_date) = 2017
+GROUP BY MONTH(o.order_date)
+ORDER BY order_month ASC;
+--=============== Q NO 7 =================================
+SELECT 
+    p1.product_id,
+    p1.product_name,
+    p1.category_id,
+    p1.list_price
+FROM production.products p1
+WHERE p1.list_price > (
+    SELECT AVG(p2.list_price)
+    FROM production.products p2
+    WHERE p2.category_id = p1.category_id
+);
+--=============== Q NO 8 =================================
+SELECT 
+    c.customer_id,
+    c.first_name + ' ' + c.last_name AS customer_name,
+    COUNT(o.order_id) AS total_orders
+FROM sales.customers c
+JOIN sales.orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.first_name, c.last_name
+HAVING COUNT(o.order_id) > (
+    SELECT COUNT(order_id) * 1.0 / COUNT(DISTINCT customer_id)
+    FROM sales.orders
+);
+--=============== Q NO 9 =================================
+WITH CustomerSpend AS (
+    SELECT 
+        c.customer_id,
+        c.first_name + ' ' + c.last_name AS customer_name,
+        SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS total_spend
+    FROM sales.customers c
+    JOIN sales.orders o ON c.customer_id = o.customer_id
+    JOIN sales.order_items oi ON o.order_id = oi.order_id
+    GROUP BY c.customer_id, c.first_name, c.last_name
+),
+CustomerSegmentation AS (
+    SELECT 
+        customer_id,
+        customer_name,
+        total_spend,
+        DENSE_RANK() OVER (ORDER BY total_spend DESC) AS spend_rank,
+        CASE 
+            WHEN total_spend > (SELECT AVG(total_spend) FROM CustomerSpend) THEN 'High'
+            ELSE 'Regular'
+        END AS customer_tier
+    FROM CustomerSpend
+)
+SELECT *
+FROM CustomerSegmentation
+WHERE spend_rank <= 10
+ORDER BY spend_rank;
+
+--=============== Q NO 10 =================================
+WITH ProductSales AS (
+    SELECT 
+        p.category_id,
+        p.product_id,
+        p.product_name,
+        SUM(oi.quantity) AS total_quantity_sold
+    FROM production.products p
+    JOIN sales.order_items oi ON p.product_id = oi.product_id
+    GROUP BY p.category_id, p.product_id, p.product_name
+),
+RankedProducts AS (
+    SELECT 
+        category_id,
+        product_id,
+        product_name,
+        total_quantity_sold,
+        ROW_NUMBER() OVER (
+            PARTITION BY category_id 
+            ORDER BY total_quantity_sold DESC
+        ) AS rn
+    FROM ProductSales
+),
+ProductStock AS (
+    SELECT 
+        product_id,
+        SUM(quantity) AS current_stock
+    FROM production.stocks
+    GROUP BY product_id
+)
+SELECT 
+    c.category_name,
+    rp.product_name,
+    rp.total_quantity_sold,
+    ISNULL(ps.current_stock, 0) AS total_available_stock
+FROM RankedProducts rp
+JOIN production.categories c ON rp.category_id = c.category_id
+LEFT JOIN ProductStock ps ON rp.product_id = ps.product_id
+WHERE rp.rn = 1;

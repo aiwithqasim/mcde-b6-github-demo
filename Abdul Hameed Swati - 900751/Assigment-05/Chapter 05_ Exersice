@@ -1,0 +1,182 @@
+-- ============================================================================
+-- CHAPTER 05: SUBQUERIES - EXERCISES & SOLUTIONS
+-- Database Context: BikeStores Sample Database (production & sales schemas)
+-- ============================================================================
+
+
+-- ============================================================================
+-- EXERCISE 5.1: Correlated Subquery in WHERE
+-- Task: Write a query using a scalar subquery that returns all products with 
+-- a list_price above the average price in their brand.
+-- ============================================================================
+SELECT 
+    p1.product_id,
+    p1.product_name,
+    p1.brand_id,
+    p1.list_price
+FROM production.products p1
+WHERE p1.list_price > (
+    SELECT AVG(p2.list_price)
+    FROM production.products p2
+    WHERE p2.brand_id = p1.brand_id -- Links inner query to outer query's brand
+);
+
+
+-- ============================================================================
+-- EXERCISE 5.2: Subquery with IN Operator
+-- Task: Write a query using IN that returns all orders placed by customers 
+-- living in New York or California.
+-- ============================================================================
+SELECT 
+    order_id,
+    customer_id,
+    order_date
+FROM sales.orders
+WHERE customer_id IN (
+    SELECT customer_id
+    FROM sales.customers
+    WHERE state IN ('NY', 'CA')
+);
+
+
+-- ============================================================================
+-- EXERCISE 5.3: Fixing the NULL Trap in NOT IN
+-- Task: The following query is meant to find customers who never ordered, 
+-- but has a NULL trap. Fix it.
+-- ----------------------------------------------------------------------------
+-- Original Problematic Query:
+-- SELECT customer_id FROM sales.customers
+-- WHERE customer_id NOT IN (SELECT customer_id FROM sales.orders);
+-- ============================================================================
+
+-- FIX OPTION 1: Using `WHERE IS NOT NULL` in the subquery
+SELECT customer_id 
+FROM sales.customers
+WHERE customer_id NOT IN (
+    SELECT customer_id 
+    FROM sales.orders 
+    WHERE customer_id IS NOT NULL
+);
+
+-- FIX OPTION 2: Using `NOT EXISTS` (Recommended Best Practice)
+SELECT c.customer_id 
+FROM sales.customers c
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM sales.orders o 
+    WHERE o.customer_id = c.customer_id
+);
+
+
+-- ============================================================================
+-- EXERCISE 5.4: Derived Table in FROM Clause
+-- Task: Using a derived table in FROM, write a query that finds the average 
+-- number of items per order across all orders.
+-- ============================================================================
+SELECT 
+    AVG(total_items) AS avg_items_per_order
+FROM (
+    -- Derived Table: Calculates the total item count per order
+    SELECT 
+        order_id, 
+        SUM(quantity) AS total_items
+    FROM sales.order_items
+    GROUP BY order_id
+) AS order_summaries;
+
+
+-- ============================================================================
+-- EXERCISE 5.5: Rewriting EXISTS with IN & Safety Comparison
+-- Task: Rewrite the EXISTS example using IN instead. Which version is safer and why?
+-- ============================================================================
+
+-- Rewritten Query using IN:
+SELECT 
+    customer_id,
+    first_name,
+    last_name
+FROM sales.customers
+WHERE customer_id IN (
+    SELECT DISTINCT customer_id
+    FROM sales.orders
+);
+
+/*
+  EXPLANATION - Which version is safer and why?
+  ----------------------------------------------------------------------------
+  `EXISTS` is safer and more robust than `IN` for two main reasons:
+
+  1. NULL Safety: If the subquery dataset contains NULL values, `NOT IN` will 
+     fail to evaluate correctly (returning 0 rows due to 3-valued logic). 
+     `EXISTS` evaluates existence directly as TRUE/FALSE and is completely 
+     unaffected by NULL values.
+     
+  2. Performance: Database query optimizers usually handle `EXISTS` better 
+     because it short-circuits (stops evaluating as soon as a single match 
+     is found), whereas `IN` may materialize the entire list of subquery results.
+*/
+
+
+-- ============================================================================
+-- EXERCISE 5.6: CROSS APPLY for Top-N Per Group
+-- Task: Use CROSS APPLY to return the top 3 most recent orders for each customer. 
+-- Show customer_id, first_name, order_id, and order_date.
+-- ============================================================================
+SELECT 
+    c.customer_id,
+    c.first_name,
+    o.order_id,
+    o.order_date
+FROM sales.customers c
+CROSS APPLY (
+    SELECT TOP 3 
+        order_id, 
+        order_date
+    FROM sales.orders o_inner
+    WHERE o_inner.customer_id = c.customer_id
+    ORDER BY order_date DESC, order_id DESC
+) o;
+
+
+-- ============================================================================
+-- EXERCISE 5.7: Conceptual Analysis (= ANY vs IN vs ALL)
+-- Task: Think About It: = ANY (subquery) is functionally identical to IN (subquery). 
+-- Given that, when would you choose ANY over IN, and when would you choose ALL? 
+-- What business question naturally maps to ALL that cannot be expressed cleanly with IN?
+-- ============================================================================
+
+/*
+  CONCEPTUAL ANSWERS:
+  ----------------------------------------------------------------------------
+  1. When to choose ANY over IN:
+     While `= ANY` is identical to `IN`, `ANY` shines when combined with inequality 
+     operators such as `>`, `<`, `>=`, or `<=`. For example:
+     - `> ANY (subquery)` means "greater than AT LEAST ONE value in the subquery".
+     - `< ANY (subquery)` means "less than AT LEAST ONE value in the subquery".
+     `IN` only supports exact equality (`=`) and cannot handle relational comparisons.
+
+  2. When to choose ALL:
+     Choose `ALL` when a condition must hold true against EVERY SINGLE row returned 
+     by the subquery.
+     - `> ALL (subquery)` means "greater than the MAXIMUM value of the subquery".
+     - `< ALL (subquery)` means "less than the MINIMUM value of the subquery".
+
+  3. Business Question mapping to ALL (unexpressible cleanly with IN):
+     Business Question: 
+     "Find all products whose list price is higher than EVERY product in the 
+     'Mountain Bikes' category."
+
+     SQL Code Solution using ALL:
+*/
+
+SELECT 
+    product_id, 
+    product_name, 
+    list_price
+FROM production.products
+WHERE list_price > ALL (
+    SELECT p.list_price
+    FROM production.products p
+    JOIN production.categories c ON p.category_id = c.category_id
+    WHERE c.category_name = 'Mountain Bikes'
+);
