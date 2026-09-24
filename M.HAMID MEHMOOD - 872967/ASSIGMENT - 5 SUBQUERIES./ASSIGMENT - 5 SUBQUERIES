@@ -1,0 +1,115 @@
+--Task 29:
+
+SELECT
+    product_id,
+    product_name,
+    list_price
+FROM production.products
+WHERE list_price >
+(
+    SELECT AVG(list_price)
+    FROM production.products
+);
+
+--Task 30:
+
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name
+FROM sales.customers AS c
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM sales.orders AS o
+    WHERE o.customer_id = c.customer_id
+);
+
+--Task 31:
+
+SELECT
+    p.product_id,
+    p.product_name,
+    p.category_id,
+    p.list_price
+FROM production.products AS p
+WHERE p.list_price =
+(
+    SELECT MAX(p2.list_price)
+    FROM production.products AS p2
+    WHERE p2.category_id = p.category_id
+)
+ORDER BY p.category_id;
+
+--Task 32:
+
+SELECT
+    s.staff_id,
+    s.first_name,
+    s.last_name,
+    s.store_id
+FROM sales.staffs AS s
+WHERE s.store_id =
+(
+    SELECT TOP 1
+        o.store_id
+    FROM sales.orders AS o
+    JOIN sales.order_items AS oi
+        ON o.order_id = oi.order_id
+    GROUP BY o.store_id
+    ORDER BY SUM(oi.quantity * oi.list_price * (1 - oi.discount)) DESC
+);
+
+
+--Task 33:
+
+SELECT
+    o.order_id,
+    o.customer_id,
+    o.order_date
+FROM sales.orders AS o
+WHERE o.order_id IN
+(
+    SELECT
+        oi.order_id
+    FROM sales.order_items AS oi
+    GROUP BY oi.order_id
+    HAVING SUM(
+        oi.quantity * oi.list_price * (1 - oi.discount)
+    ) > 5000
+);
+
+--Task 34:
+
+SELECT
+    p.product_id,
+    p.product_name,
+    p.list_price
+FROM production.products AS p
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM sales.order_items AS oi
+    WHERE oi.product_id = p.product_id
+);
+
+
+--Task 35:
+
+SELECT TOP 1
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    SUM(
+        oi.quantity * oi.list_price * (1 - oi.discount)
+    ) AS total_spent
+FROM sales.customers AS c
+JOIN sales.orders AS o
+    ON c.customer_id = o.customer_id
+JOIN sales.order_items AS oi
+    ON o.order_id = oi.order_id
+GROUP BY
+    c.customer_id,
+    c.first_name,
+    c.last_name
+ORDER BY total_spent DESC;
