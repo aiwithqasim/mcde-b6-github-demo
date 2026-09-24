@@ -1,20 +1,20 @@
 -- Task 6.2
-WITH   AVG
-AS     (SELECT AVG(order_count) AS avg_orders
-        FROM   (SELECT   store_id,
-                         COUNT(*) AS order_count
-                FROM     sales.orders
-                GROUP BY store_id) AS store_counts)
+WITH AVG
+AS (SELECT AVG(order_count) AS avg_orders
+        FROM (SELECT store_id,
+            COUNT(*) AS order_count
+        FROM sales.orders
+        GROUP BY store_id) AS store_counts)
 SELECT *
-FROM   AVG;
+FROM AVG;
 
 -- Task 6.3
-WITH   cte_high_value_products
-AS     (SELECT pp.product_name,
-               pp.list_price,
-               pp.category_id
-        FROM   production.products AS pp
-        WHERE  pp.list_price > 2000)
+WITH cte_high_value_products
+AS (SELECT pp.product_name,
+       pp.list_price,
+       pp.category_id
+FROM production.products AS pp
+WHERE  pp.list_price > 2000)
 SELECT h.product_name,
        h.list_price,
        c.category_name
