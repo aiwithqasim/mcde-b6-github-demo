@@ -1,0 +1,114 @@
+--==========Exercise 6.1 =================
+
+WITH store_counts AS (
+    SELECT store_id, COUNT(*) AS order_count
+    FROM sales.orders
+    GROUP BY store_id
+)
+SELECT AVG(order_count) AS avg_orders
+FROM store_counts;
+ 
+ --==========Exercise 6.2 =================
+
+WITH cte_high_value_products AS (
+    SELECT 
+        product_id, 
+        product_name, 
+        category_id, 
+        list_price
+    FROM production.products
+    WHERE list_price > 2000
+)
+SELECT 
+    p.product_name, 
+    c.category_name, 
+    p.list_price
+FROM cte_high_value_products p
+INNER JOIN production.categories c 
+    ON p.category_id = c.category_id
+WHERE c.category_name = 'Mountain Bikes';
+
+ --==========Exercise 6.3 =================
+WITH customer_orders AS (
+    SELECT 
+        customer_id, 
+        COUNT(order_id) AS order_count
+    FROM sales.orders
+    GROUP BY customer_id
+),
+customer_revenue AS (
+    SELECT 
+        o.customer_id, 
+        SUM(i.quantity * i.list_price * (1 - i.discount)) AS total_revenue
+    FROM sales.orders o
+    INNER JOIN sales.order_items i 
+        ON o.order_id = i.order_id
+    GROUP BY o.customer_id
+)
+SELECT 
+    co.customer_id,
+    co.order_count,
+    ROUND(cr.total_revenue, 2) AS total_revenue
+FROM customer_orders co
+INNER JOIN customer_revenue cr 
+    ON co.customer_id = cr.customer_id;
+
+ --==========Exercise 6.4 =================
+ WITH Recursive_Numbers AS (
+    -- Anchor member: Start with 1
+    SELECT 1 AS n, 1 * 1 AS square
+    
+    UNION ALL
+    
+    -- Recursive member: Increment n by 1 until n reaches 10
+    SELECT n + 1, (n + 1) * (n + 1)
+    FROM Recursive_Numbers
+    WHERE n < 10
+)
+SELECT n, square 
+FROM Recursive_Numbers;
+
+ --==========Exercise 6.5 =================
+ WITH OrgChart_CTE AS (
+    -- Anchor member: Top manager (Level 0)
+    SELECT 
+        staff_id, 
+        first_name, 
+        manager_id, 
+        CAST(NULL AS VARCHAR(50)) AS manager_first_name, -- Top manager ka koi manager nahi hota
+        0 AS level
+    FROM sales.staffs
+    WHERE manager_id IS NULL
+    
+    UNION ALL
+    
+    -- Recursive member: Direct and indirect reports
+    SELECT 
+        e.staff_id, 
+        e.first_name, 
+        e.manager_id, 
+        m.first_name AS manager_first_name, -- Manager ka naam query se fetch ho raha hai
+        m.level + 1 AS level
+    FROM sales.staffs AS e
+    INNER JOIN OrgChart_CTE AS m 
+        ON e.manager_id = m.staff_id
+)
+SELECT 
+    staff_id, 
+    first_name AS employee_name, 
+    manager_first_name, 
+    level
+FROM OrgChart_CTE
+ORDER BY level, manager_first_name;
+
+ --==========Exercise 6.6 ================
+SELECT store_id, COUNT(*) AS order_count
+INTO #temp_store_counts
+FROM sales.orders
+GROUP BY store_id;
+
+SELECT a.store_id, a.order_count, b.order_count AS comparison_count
+FROM #temp_store_counts a
+INNER JOIN #temp_store_counts b ON a.store_id = b.store_id;
+
+DROP TABLE #temp_store_counts;

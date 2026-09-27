@@ -1,0 +1,235 @@
+    --Student Name: Abdul Hameed Swati
+    --Student ID: CDE-900751
+    --Batch: claude_Engineering
+    --Date: 27/9/2026
+
+
+--===================Task 1 — Build the Sales Detail Dataset (6 marks)============================
+SELECT 
+    o.order_id,
+    o.order_date,
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_full_name,
+    s.store_name,
+    CONCAT(st.first_name, ' ', st.last_name) AS staff_full_name,
+    p.product_name,
+    cat.category_name,
+    b.brand_name,
+    oi.quantity,
+    oi.list_price,
+    oi.discount,
+    ROUND(oi.quantity * oi.list_price * (1 - oi.discount), 2) AS net_line_revenue
+FROM sales.orders o
+INNER JOIN sales.order_items oi 
+    ON o.order_id = oi.order_id
+INNER JOIN sales.customers c 
+    ON o.customer_id = c.customer_id
+INNER JOIN sales.stores s 
+    ON o.store_id = s.store_id
+INNER JOIN sales.staffs st 
+    ON o.staff_id = st.staff_id
+INNER JOIN production.products p 
+    ON oi.product_id = p.product_id
+INNER JOIN production.categories cat 
+    ON p.category_id = cat.category_id
+INNER JOIN production.brands b 
+    ON p.brand_id = b.brand_id;
+
+--==========Task 2 — Store Performance Summary (5 marks)=========================
+SELECT 
+    s.store_name,
+    COUNT(DISTINCT o.order_id) AS number_of_distinct_orders,
+    SUM(i.quantity) AS total_units_sold,
+    SUM(i.quantity * i.list_price * (1 - i.discount)) AS total_net_revenue,
+    SUM(i.quantity * i.list_price * (1 - i.discount)) / COUNT(DISTINCT o.order_id) AS average_order_value
+FROM  sales.stores s JOIN sales.orders o ON s.store_id = o.store_id JOIN sales.order_items i ON o.order_id = i.order_id
+WHERE  o.order_status = 4
+GROUP BY s.store_id, s.store_name
+ORDER BY total_net_revenue DESC;
+
+--==============Task 3 — High-Value Customers (5 marks)==========================
+WITH CustomerSpending AS (
+    SELECT 
+        c.customer_id,
+        CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+        COUNT(DISTINCT o.order_id) AS completed_order_count,
+        SUM(i.quantity * i.list_price * (1 - i.discount)) AS total_spending
+    FROM sales.customers c  JOIN  sales.orders o ON c.customer_id = o.customer_id
+    JOIN  sales.order_items i ON o.order_id = i.order_id
+    WHERE  o.order_status = 4
+    GROUP BY  c.customer_id ,  c.first_name ,c.last_name
+)
+SELECT 
+    customer_id,
+    customer_name,
+    completed_order_count,
+    total_spending
+FROM CustomerSpending
+WHERE  total_spending > (SELECT AVG(total_spending) FROM CustomerSpending)
+ORDER BY total_spending DESC;
+
+--============Task 4 — Inventory Risk Report (5 marks)=================
+SELECT 
+    p.product_name,
+    s.store_name,
+    s_stocks.quantity AS current_quantity,
+    c.category_name,
+    b.brand_name
+FROM production.stocks s_stocks
+JOIN production.products p ON s_stocks.product_id = p.product_id
+JOIN production.categories c ON p.category_id = c.category_id
+JOIN production.brands b ON p.brand_id = b.brand_id
+JOIN sales.stores s ON s_stocks.store_id = s.store_id
+WHERE s_stocks.quantity < 5
+ORDER BY  s_stocks.quantity ASC , p.product_name ASC;
+
+--========Task 5 — Top Products Within Each Category (6 marks)===========
+WITH ProductRevenue AS (
+    SELECT 
+        c.category_name,
+        p.product_name,
+        SUM(i.quantity) AS total_units_sold,
+        SUM(i.quantity * i.list_price * (1 - i.discount)) AS total_net_revenue,
+        DENSE_RANK() OVER (
+            PARTITION BY c.category_id 
+            ORDER BY SUM(i.quantity * i.list_price * (1 - i.discount)) DESC
+        ) AS product_position
+    FROM  production.categories c
+    JOIN  production.products p ON c.category_id = p.category_id
+    JOIN  sales.order_items i ON p.product_id = i.product_id
+    JOIN  sales.orders o ON i.order_id = o.order_id
+    WHERE o.order_status = 4
+    GROUP BY c.category_id, c.category_name, p.product_id, p.product_name
+)
+SELECT 
+    category_name,
+    product_name,
+    total_units_sold,
+    total_net_revenue,
+    product_position
+FROM ProductRevenue
+WHERE product_position <= 3
+ORDER BY category_name ASC, product_position ASC;
+
+--=====================Task 6 — Monthly Sales Trend (6 marks)=========================
+WITH MonthlySales AS (
+    SELECT 
+        YEAR(o.order_date) AS year,
+        MONTH(o.order_date) AS month,
+        SUM(i.quantity * i.list_price * (1 - i.discount)) AS total_net_revenue
+    FROM  sales.orders o
+    JOIN sales.order_items i ON o.order_id = i.order_id
+    WHERE o.order_status = 4 
+    GROUP BY YEAR(o.order_date),MONTH(o.order_date)
+),
+SalesWithLag AS (
+    SELECT 
+        year,
+        month,
+        total_net_revenue,
+        LAG(total_net_revenue) OVER (
+            ORDER BY year ASC, month ASC
+        ) AS previous_month_total_net_revenue
+    FROM MonthlySales
+)
+SELECT 
+    year,
+    month,
+    total_net_revenue,
+    previous_month_total_net_revenue,
+    (total_net_revenue - ISNULL(previous_month_total_net_revenue, 0)) AS revenue_change
+FROM SalesWithLag
+ORDER BY year ASC,month ASC;
+
+--===============Task 7 — Reusable Reporting View (4 marks)=====================
+CREATE VIEW sales.vw_customer_sales_summary AS
+SELECT 
+    c.customer_id,
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_full_name,
+    COUNT(DISTINCT CASE WHEN o.order_status = 4 THEN o.order_id END) AS total_completed_orders,
+    ISNULL(SUM(CASE WHEN o.order_status = 4 THEN i.quantity END), 0) AS total_units_purchased,
+    ISNULL(SUM(CASE WHEN o.order_status = 4 THEN i.quantity * i.list_price * (1 - i.discount) END), 0) AS total_net_revenue,
+    MAX(CASE WHEN o.order_status = 4 THEN o.order_date END) AS most_recent_completed_order_date
+FROM 
+    sales.customers c
+LEFT JOIN 
+    sales.orders o ON c.customer_id = o.customer_id
+LEFT JOIN 
+    sales.order_items i ON o.order_id = i.order_id
+GROUP BY 
+    c.customer_id,
+    c.first_name,
+    c.last_name;
+
+--============Task 8 — Safe Data Modification (4 marks)==================
+BEGIN TRANSACTION;
+
+UPDATE sales.customers
+SET phone = '(999) 555-0101'
+WHERE customer_id = 1;
+
+SELECT 
+    customer_id,
+    first_name,
+    last_name,
+    phone
+FROM sales.customers
+WHERE customer_id = 1;
+
+ROLLBACK TRANSACTION;
+
+--==============Task 9 — Store Sales Procedure (6 marks)======================
+CREATE PROCEDURE sales.usp_store_sales_report
+    @store_id INT,
+    @start_date DATE,
+    @end_date DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @start_date > @end_date
+    BEGIN
+        RAISERROR('Invalid date range: @start_date cannot be later than @end_date.', 16, 1);
+        RETURN;
+    END
+
+    SELECT 
+        p.product_name,
+        SUM(i.quantity) AS total_units_sold,
+        SUM(i.quantity * i.list_price * (1 - i.discount)) AS total_net_revenue
+    FROM 
+        sales.orders o
+    JOIN 
+        sales.order_items i ON o.order_id = i.order_id
+    JOIN 
+        production.products p ON i.product_id = p.product_id
+    WHERE 
+        o.store_id = @store_id
+        AND o.order_status = 4
+        AND o.order_date >= @start_date
+        AND o.order_date <= @end_date
+    GROUP BY 
+        p.product_id,
+        p.product_name
+    ORDER BY 
+        total_net_revenue DESC;
+END;
+
+--===============Task 10 — Management Insight Query (3 marks)===============
+SELECT 
+    s.store_name,
+    st.first_name + ' ' + st.last_name AS staff_name,
+    COUNT(DISTINCT o.order_id) AS total_orders,
+    SUM(i.quantity * i.list_price * (1 - i.discount)) AS total_revenue
+FROM sales.staffs st
+JOIN sales.stores s ON st.store_id = s.store_id
+JOIN sales.orders o ON st.staff_id = o.staff_id
+JOIN sales.order_items i ON o.order_id = i.order_id
+WHERE o.order_status = 4 
+GROUP BY s.store_id ,s.store_name,st.staff_id,st.first_name,st.last_name
+ORDER BY total_revenue DESC;
+
+/*
+Business Question: Which sales staff members generate the highest revenue across stores?
+Result Measures: Total completed orders and net revenue per staff member within their assigned store.
+Why Care: Helps identify top sales performers for incentives and highlights underperformers for coaching.
+*/
