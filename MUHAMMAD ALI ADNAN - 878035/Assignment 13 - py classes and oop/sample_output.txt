@@ -1,0 +1,153 @@
+﻿
+########## Q1.py ##########
+=== Test 1: valid marks update ===
+  [OK] Ali's marks set to 85 -> Grade A
+  get_marks() = 85, get_grade() = A
+
+=== Test 2: invalid marks update (out of range) ===
+  [REJECTED] Invalid marks 150 for Ali: must be between 0 and 100.
+  Marks unchanged: 85, Grade still: A
+
+=== Test 3: another student, valid update ===
+  [OK] Sara's marks set to 55 -> Grade C
+  [OK] Sara's marks set to 65 -> Grade B
+  get_marks() = 65, get_grade() = B
+
+=== Extension: direct access to __grade ===
+  ali._marks          -> 85  (works: protected, convention-only)
+  ali.__grade         -> AttributeError: 'Student' object has no attribute '__grade'
+  ali._Student__grade -> A  (name mangling workaround)
+  Explanation: Python renames __grade to _Student__grade behind the scenes,
+  so external code cannot access it directly. This prevents accidental access
+  but is NOT true security (it can still be read via the mangled name).
+
+########## Q2.py ##########
+=== Test 1: successful deposit ===
+  [OK] Deposited Rs. 2500. Balance = Rs. 7500
+
+=== Test 2: successful withdrawal ===
+  [OK] Withdrawn Rs. 1000. Balance = Rs. 6500
+
+=== Test 3: rejected - withdrawal with wrong PIN ===
+  [REJECTED] Withdrawal of Rs. 500 failed: incorrect PIN.
+
+=== Test 4: rejected - withdrawal exceeding balance ===
+  [REJECTED] Withdrawal of Rs. 100000 failed: insufficient balance (available Rs. 6500).
+
+Final balance (correct PIN): Rs. 6500
+  [REJECTED] Balance inquiry failed: incorrect PIN.
+Final balance (wrong PIN):   None
+
+=== Extension: why double underscores are not true security ===
+  Double underscores only trigger name mangling (__balance -> _BankAccount__balance).
+  It hides the attribute from casual access, but anyone can still read it via
+  acc._BankAccount__balance. Real security requires language-level enforcement
+  or cryptographic measures, not name mangling.
+  acc._BankAccount__balance = 6500  (proof it is still reachable)
+
+########## Q3.py ##########
+=== Employee objects ===
+  Developer: Ali, ID: E-101, Language: Python
+  Manager: Sara, ID: E-102, Team size: 8
+
+=== Shared attributes inherited from Employee ===
+  dev.name = Ali, dev.employee_id = E-101
+  mgr.name = Sara, mgr.employee_id = E-102
+
+=== Role-specific attributes ===
+  dev.programming_language = Python
+  mgr.team_size = 8
+
+=== Inheritance check ===
+  isinstance(dev, Employee)  -> True
+  isinstance(mgr, Employee)  -> True
+
+########## Q4.py ##########
+=== 3-day rental ===
+  Toyota Corolla: base Rs. 5000/day + insurance Rs. 1000 = Rs. 16000
+  Honda CG 125: base Rs. 2000/day - 10% discount = Rs. 5400.0
+
+=== Rejected: zero or fewer days ===
+  Toyota (0 days) -> ValueError: Rental duration must be positive (got 0 days).
+  Toyota (-2 days) -> ValueError: Rental duration must be positive (got -2 days).
+  Honda (0 days) -> ValueError: Rental duration must be positive (got 0 days).
+  Honda (-2 days) -> ValueError: Rental duration must be positive (got -2 days).
+
+=== Inheritance check ===
+  isinstance(car, Vehicle) -> True
+  isinstance(bike, Vehicle) -> True
+
+########## Q5.py ##########
+=== Dispatcher with original three channels ===
+  [EMAIL]    To: user@example.com | Body: Your order has been shipped!
+  [SMS]      To: +92-300-1234567 | Text: Your order has been shipped!
+  [PUSH]     To: mobile-app | Alert: Your order has been shipped!
+
+=== WhatsAppNotification added WITHOUT changing notify_all ===
+  [EMAIL]    To: user@example.com | Body: Your order has been shipped!
+  [SMS]      To: +92-300-1234567 | Text: Your order has been shipped!
+  [PUSH]     To: mobile-app | Alert: Your order has been shipped!
+  [WHATSAPP] To: +92-300-1234567 | Chat: Your order has been shipped!
+
+=== Where does polymorphism occur? ===
+  In notify_all(): the loop calls .send(message) on each object without
+  knowing its concrete class. Each class provides its own implementation
+  of send(), so the same call produces channel-specific behaviour.
+  This is duck typing / polymorphism in action - new notification classes
+  work with the dispatcher as long as they implement send(message).
+
+########## Q6.py ##########
+=== Receipts for a bill of Rs. 10,000 ===
+  RegularCustomer    | Bill Rs. 10,000.00 | Final Rs.  9,500.00
+  PremiumCustomer    | Bill Rs. 10,000.00 | Final Rs.  9,000.00
+  VIPCustomer        | Bill Rs. 10,000.00 | Final Rs.  8,000.00
+
+=== Extension: GoldCustomer (15%) added, print_receipt unchanged ===
+  GoldCustomer       | Bill Rs. 10,000.00 | Final Rs.  8,500.00
+
+=== Rejected: negative bill amount ===
+  [REJECTED] Bill amount Rs. -500 is invalid: must not be negative.
+
+=== Polymorphism ===
+  print_receipt() works with any object that implements final_price(amount),
+  regardless of its class - the discount is resolved at call time.
+
+########## Q7.py ##########
+=== Circle (radius 5) ===
+  area      = 78.5397
+  perimeter = 31.4159
+
+=== Rectangle (width 4, height 6) ===
+  area      = 24.0000
+  perimeter = 20.0000
+
+=== Attempt to instantiate Shape directly ===
+  TypeError: Can't instantiate abstract class Shape without an implementation for abstract methods 'area', 'perimeter'
+  Explanation: Shape is abstract (inherits ABC and declares @abstractmethod),
+  so Python refuses to create instances of it. Subclasses must implement
+  area() and perimeter() before they can be instantiated.
+
+########## Q8.py ##########
+=== Successful payments ===
+  [CARD]           PAY      Rs. 2,500.00
+  [WALLET]         PAY      Rs. 2,500.00
+  [BANK TRANSFER]  PAY      Rs. 2,500.00
+
+=== Rejected: non-positive amounts ===
+  [REJECTED] Payment amount must be positive.
+  [REJECTED] Payment amount must be positive.
+  [REJECTED] Payment amount must be positive.
+
+=== Refunds ===
+  [CARD]           REFUND   Rs. 2,500.00
+  [WALLET]         REFUND   Rs. 2,500.00
+  [BANK TRANSFER]  REFUND   Rs. 2,500.00
+
+=== Extension: CryptoPayment added, process_transaction unchanged ===
+  [CRYPTO]         PAY      Rs. 2,500.00
+
+=== Abstraction check ===
+  TypeError: Can't instantiate abstract class PaymentMethod without an implementation for abstract methods 'pay', 'refund'
+  process_transaction() only depends on the pay() interface, so any class
+  that implements the abstract methods works without modifying the function.
+
