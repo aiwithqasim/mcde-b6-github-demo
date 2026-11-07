@@ -1,0 +1,10 @@
+sku,type,units
+P01,OUT,4
+P01,OUT,9
+P01,IN,2
+P02,IN,0
+P02,IN,-3
+P99,IN,3
+P02,MOVE,1
+P02,OUT,abc
+P02,OUT,5

@@ -1,0 +1,15 @@
+[
+  {
+    "order_id": "0CDBBA4980",
+    "lines": [
+      {
+        "product_id": "P1",
+        "name": "Notebook",
+        "price": 100,
+        "quantity": 2
+      }
+    ],
+    "discount_percent": 10,
+    "total": 180.0
+  }
+]
